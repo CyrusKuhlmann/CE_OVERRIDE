@@ -1,0 +1,24 @@
+# Makefile
+compile_commands.json
+common.mk
+Makefile
+
+
+# Compiled Object files
+*.o
+*.obj
+
+# Executables
+*.bin
+*.elf
+
+# PROS
+bin/
+.vscode/
+.cache/
+temp.log
+temp.errors
+*.ini
+.d/
+firmware/
+project.pros
