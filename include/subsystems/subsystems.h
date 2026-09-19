@@ -16,5 +16,5 @@ inline void subsystemInit() {
                                 {CONFIG::RIGHT_DRIVE[0], CONFIG::RIGHT_DRIVE[1], CONFIG::RIGHT_DRIVE[2]},
                                 CONFIG::IMU_PORT, CONFIG::FWD_ROTATION_PORT, CONFIG::LAT_ROTATION_PORT);
 
-    CommandScheduler::registerSubsystem(drivetrainSubsystem, drivetrainSubsystem->tankDrive(primary));
+    CommandScheduler::registerSubsystem(drivetrainSubsystem, drivetrainSubsystem->drive(primary));
 }

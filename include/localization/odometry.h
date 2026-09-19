@@ -7,13 +7,6 @@
 
 // Two-wheel + IMU dead reckoning.
 // Robot frame: +x forward, +y left. World: +x east, +y north. Heading CW from +Y.
-//
-// Tracking-wheel corrections follow rigid-body velocity at each mount:
-//   v = v_center + ω_ccw × r,  ω_cw = −ω_ccw
-//   fwd wheel (left_in = −1, axis forward, not reversed):
-//     measured_fwd = v_fwd − ω_cw * right_offset
-//   lat wheel (forward_in = −5.5, axis left, port −12 reversed → right-positive):
-//     measured_right = v_right − ω_cw * (−lat_fwd_offset)
 namespace Odometry {
 
 inline double centerFwd(double deltaFwd, double deltaTheta) {

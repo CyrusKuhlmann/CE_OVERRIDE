@@ -118,6 +118,59 @@ RunCommand* DrivetrainSubsystem::tankDrive(pros::Controller& controller) {
         {this});
 }
 
+RunCommand* DrivetrainSubsystem::doubleArcadeDrive(pros::Controller& controller) {
+    auto* pad = &controller;
+    return new RunCommand(
+        [this, pad]() {
+            if (!pad->is_connected()) {
+                this->stop();
+                return;
+            }
+            double left =
+                std::clamp(static_cast<double>(pad->get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_Y) - pad->get_analog(pros::E_CONTROLLER_ANALOG_LEFT_X)), -127.0, 127.0) /
+                127.0;
+            double right =
+                std::clamp(static_cast<double>(pad->get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_Y) + pad->get_analog(pros::E_CONTROLLER_ANALOG_LEFT_X)), -127.0, 127.0) /
+                127.0;
+            if (std::fabs(left) < CONFIG::DRIVE_DEADBAND) left = 0.0;
+            if (std::fabs(right) < CONFIG::DRIVE_DEADBAND) right = 0.0;
+            this->setPct(left, right);
+        },
+        {this});
+}
+
+RunCommand* DrivetrainSubsystem::singleArcadeDrive(pros::Controller& controller) {
+    auto* pad = &controller;
+    return new RunCommand(
+        [this, pad]() {
+            if (!pad->is_connected()) {
+                this->stop();
+                return;
+            }
+            double left =
+                std::clamp(static_cast<double>(pad->get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_Y) - pad->get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X)), -127.0, 127.0) /
+                127.0;
+            double right =
+                std::clamp(static_cast<double>(pad->get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_Y) + pad->get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X)), -127.0, 127.0) /
+                127.0;
+            if (std::fabs(left) < CONFIG::DRIVE_DEADBAND) left = 0.0;
+            if (std::fabs(right) < CONFIG::DRIVE_DEADBAND) right = 0.0;
+            this->setPct(left, right);
+        },
+        {this});
+}
+
+RunCommand* DrivetrainSubsystem::drive(pros::Controller& controller) {
+    switch (CONFIG::DEFAULT_DRIVE_TYPE) {
+        case CONFIG::DOUBLE_ARCADE:
+            return doubleArcadeDrive(controller);
+        case CONFIG::SINGLE_ARCADE:
+            return singleArcadeDrive(controller);
+        case CONFIG::TANK:
+            return tankDrive(controller);
+    }
+}
+
 InstantCommand* DrivetrainSubsystem::setPoseCommand(double xIn, double yIn, double thetaRad) {
     return new InstantCommand([this, xIn, yIn, thetaRad]() { this->setPose(xIn, yIn, thetaRad); }, {this});
 }

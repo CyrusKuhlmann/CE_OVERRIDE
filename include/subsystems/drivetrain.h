@@ -35,6 +35,9 @@ public:
     void setPose(double xIn, double yIn, double thetaRad);
 
     RunCommand* tankDrive(pros::Controller& controller);
+    RunCommand* doubleArcadeDrive(pros::Controller& controller);
+    RunCommand* singleArcadeDrive(pros::Controller& controller);
+    RunCommand* drive(pros::Controller& controller);
     InstantCommand* setPoseCommand(double xIn, double yIn, double thetaRad);
 
     double imuHeadingDeg() const { return imu_.get_heading(); }

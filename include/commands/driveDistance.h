@@ -14,13 +14,14 @@
 // Drive a signed distance (in) while holding a field heading (rad).
 class DriveDistance : public Command {
 public:
-    DriveDistance(DrivetrainSubsystem* drivetrain, double distanceIn, double headingRad, bool finish = true)
+    DriveDistance(DrivetrainSubsystem* drivetrain, double distanceIn, double headingRad = INFINITY, bool finish = true)
         : drivetrain_(drivetrain), distanceIn_(distanceIn), headingRad_(headingRad), finish_(finish) {}
 
     void initialize() override {
         const auto pose = drivetrain_->getPose();
         startX_ = pose.x();
         startY_ = pose.y();
+        if (std::isinf(headingRad_)) headingRad_ = pose.z();
 
         drivePid_ = PID(CONFIG::DRIVE_PID);
         drivePid_.setOutputLimit(-CONFIG::DRIVE_OUTPUT_LIMIT, CONFIG::DRIVE_OUTPUT_LIMIT);

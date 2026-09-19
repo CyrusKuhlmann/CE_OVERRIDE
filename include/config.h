@@ -44,4 +44,11 @@ inline double wrapPi(double a) {
     return a - PI;
 }
 
+enum driveType {
+    DOUBLE_ARCADE,
+    SINGLE_ARCADE,
+    TANK,
+};
+
+constexpr driveType DEFAULT_DRIVE_TYPE = DOUBLE_ARCADE;
 }  // namespace CONFIG

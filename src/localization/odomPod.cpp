@@ -4,7 +4,7 @@
 #include <cstdint>
 
 OdomPod::OdomPod(double wheelDiameterIn)
-    : inchesPerCentidegree_(3.14159265358979323846 * wheelDiameterIn / 36000.0) {}
+    : inchesPerCentidegree_(M_PI * wheelDiameterIn / 36000.0) {}
 
 double OdomPod::update(int32_t centidegrees) {
     if (!seeded_) {
