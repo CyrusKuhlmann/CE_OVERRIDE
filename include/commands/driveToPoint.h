@@ -4,6 +4,7 @@
 #include "config.h"
 #include "controllers/pidController.h"
 #include "subsystems/drivetrain.h"
+#include "subsystems/localization.h"
 
 #include "pros/rtos.hpp"
 
@@ -14,11 +15,12 @@
 // Turn to face (x, y) then drive there. Target is computed in initialize() from the current pose.
 class DriveToPoint : public Command {
 public:
-    DriveToPoint(DrivetrainSubsystem* drivetrain, double xIn, double yIn, bool finish = true)
-        : drivetrain_(drivetrain), targetX_(xIn), targetY_(yIn), finish_(finish) {}
+    DriveToPoint(DrivetrainSubsystem* drivetrain, LocalizationSubsystem* localization, double xIn, double yIn,
+                 bool finish = true)
+        : drivetrain_(drivetrain), localization_(localization), targetX_(xIn), targetY_(yIn), finish_(finish) {}
 
     void initialize() override {
-        const auto pose = drivetrain_->getPose();
+        const auto pose = localization_->getPose();
         startX_ = pose.x();
         startY_ = pose.y();
         const double dx = targetX_ - startX_;
@@ -63,9 +65,9 @@ public:
         lastMs_ = now;
 
         if (phase_ == Phase::kTurn) {
-            const double out = turnPid_.calculate(drivetrain_->getAngle(), dt);
+            const double out = turnPid_.calculate(localization_->getAngle(), dt);
             drivetrain_->setPct(out, -out);
-            const double headingErr = std::fabs(CONFIG::wrapPi(headingRad_ - drivetrain_->getAngle()));
+            const double headingErr = std::fabs(CONFIG::wrapPi(headingRad_ - localization_->getAngle()));
             if (headingErr < CONFIG::ANGLE_FINISH_RAD) {
                 phase_ = Phase::kDrive;
                 drivePid_.reset();
@@ -76,7 +78,7 @@ public:
         }
 
         const double linear = drivePid_.calculate(traveledIn(), dt);
-        const double angular = headingPid_.calculate(drivetrain_->getAngle(), dt);
+        const double angular = headingPid_.calculate(localization_->getAngle(), dt);
         drivetrain_->setPct(linear + angular, linear - angular);
     }
 
@@ -101,13 +103,14 @@ private:
     enum class Phase { kTurn, kDrive, kDone };
 
     double traveledIn() const {
-        const auto pose = drivetrain_->getPose();
+        const auto pose = localization_->getPose();
         const double s = std::sin(headingRad_);
         const double c = std::cos(headingRad_);
         return (pose.x() - startX_) * s + (pose.y() - startY_) * c;  // in
     }
 
     DrivetrainSubsystem* drivetrain_;
+    LocalizationSubsystem* localization_;
     double targetX_;  // in
     double targetY_;  // in
     bool finish_;

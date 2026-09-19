@@ -4,6 +4,7 @@
 #include "config.h"
 #include "controllers/pidController.h"
 #include "subsystems/drivetrain.h"
+#include "subsystems/localization.h"
 
 #include "pros/rtos.hpp"
 
@@ -14,8 +15,8 @@
 // Point-turn to a field heading. Factories pass degrees; this command stores radians.
 class Rotate : public Command {
 public:
-    Rotate(DrivetrainSubsystem* drivetrain, double headingRad, bool finish = true)
-        : drivetrain_(drivetrain), targetRad_(headingRad), finish_(finish) {}
+    Rotate(DrivetrainSubsystem* drivetrain, LocalizationSubsystem* localization, double headingRad, bool finish = true)
+        : drivetrain_(drivetrain), localization_(localization), targetRad_(headingRad), finish_(finish) {}
 
     void initialize() override {
         pid_ = PID(CONFIG::TURN_PID);
@@ -31,7 +32,7 @@ public:
         const std::uint32_t now = pros::millis();
         const double dt = std::max((now - lastMs_) * 0.001, 0.001);
         lastMs_ = now;
-        const double out = pid_.calculate(drivetrain_->getAngle(), dt);
+        const double out = pid_.calculate(localization_->getAngle(), dt);
         drivetrain_->setPct(out, -out);
     }
 
@@ -39,7 +40,7 @@ public:
 
     bool isFinished() override {
         if (!finish_) return false;
-        const double err = std::fabs(CONFIG::wrapPi(targetRad_ - drivetrain_->getAngle()));
+        const double err = std::fabs(CONFIG::wrapPi(targetRad_ - localization_->getAngle()));
         if (err > CONFIG::ANGLE_FINISH_RAD) {
             settleStartMs_ = 0;
             return false;
@@ -52,6 +53,7 @@ public:
 
 private:
     DrivetrainSubsystem* drivetrain_;
+    LocalizationSubsystem* localization_;
     double targetRad_;  // rad
     bool finish_;
     PID pid_{CONFIG::TURN_PID};

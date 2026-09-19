@@ -4,6 +4,7 @@
 #include "config.h"
 #include "controllers/pidController.h"
 #include "subsystems/drivetrain.h"
+#include "subsystems/localization.h"
 
 #include "pros/rtos.hpp"
 
@@ -14,11 +15,16 @@
 // Drive a signed distance (in) while holding a field heading (rad).
 class DriveDistance : public Command {
 public:
-    DriveDistance(DrivetrainSubsystem* drivetrain, double distanceIn, double headingRad = INFINITY, bool finish = true)
-        : drivetrain_(drivetrain), distanceIn_(distanceIn), headingRad_(headingRad), finish_(finish) {}
+    DriveDistance(DrivetrainSubsystem* drivetrain, LocalizationSubsystem* localization, double distanceIn,
+                  double headingRad = INFINITY, bool finish = true)
+        : drivetrain_(drivetrain),
+          localization_(localization),
+          distanceIn_(distanceIn),
+          headingRad_(headingRad),
+          finish_(finish) {}
 
     void initialize() override {
-        const auto pose = drivetrain_->getPose();
+        const auto pose = localization_->getPose();
         startX_ = pose.x();
         startY_ = pose.y();
         if (std::isinf(headingRad_)) headingRad_ = pose.z();
@@ -44,7 +50,7 @@ public:
         lastMs_ = now;
 
         const double linear = drivePid_.calculate(traveledIn(), dt);
-        const double angular = headingPid_.calculate(drivetrain_->getAngle(), dt);
+        const double angular = headingPid_.calculate(localization_->getAngle(), dt);
         drivetrain_->setPct(linear + angular, linear - angular);
     }
 
@@ -65,13 +71,14 @@ public:
 
 private:
     double traveledIn() const {
-        const auto pose = drivetrain_->getPose();
+        const auto pose = localization_->getPose();
         const double s = std::sin(headingRad_);
         const double c = std::cos(headingRad_);
         return (pose.x() - startX_) * s + (pose.y() - startY_) * c;  // in
     }
 
     DrivetrainSubsystem* drivetrain_;
+    LocalizationSubsystem* localization_;
     double distanceIn_;  // in
     double headingRad_;  // rad
     bool finish_;
