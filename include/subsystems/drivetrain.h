@@ -45,6 +45,8 @@ public:
 
 private:
     void integrateOdometry(double deltaFwd, double deltaLat, double deltaTheta);
+    static double mappedDriveAxis(pros::Controller& controller, pros::controller_analog_e_t axis);
+    static double applyDriveNonlinearity(double x);
 
     pros::MotorGroup leftMotors_;
     pros::MotorGroup rightMotors_;

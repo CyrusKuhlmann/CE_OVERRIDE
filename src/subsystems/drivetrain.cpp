@@ -44,6 +44,16 @@ void DrivetrainSubsystem::setVoltages(int leftMv, int rightMv) {
 
 void DrivetrainSubsystem::stop() { setPct(0.0, 0.0); }
 
+inline double DrivetrainSubsystem::applyDriveNonlinearity(double x) {
+    return CONFIG::DRIVE_NONLINEARITY * x * x * x + (1.0 - CONFIG::DRIVE_NONLINEARITY) * x;
+}
+
+double DrivetrainSubsystem::mappedDriveAxis(pros::Controller& controller, pros::controller_analog_e_t axis) {
+    double x = std::clamp(static_cast<double>(controller.get_analog(axis)), -127.0, 127.0) / 127.0;
+    if (std::fabs(x) < CONFIG::DRIVE_DEADBAND) return 0.0;
+    return applyDriveNonlinearity(x);
+}
+
 Eigen::Vector3f DrivetrainSubsystem::getPose() const {
     return Eigen::Vector3f(static_cast<float>(odomX_), static_cast<float>(odomY_), static_cast<float>(odomTheta_));
 }
@@ -105,14 +115,8 @@ RunCommand* DrivetrainSubsystem::tankDrive(pros::Controller& controller) {
                 this->stop();
                 return;
             }
-            double left =
-                std::clamp(static_cast<double>(pad->get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y)), -127.0, 127.0) /
-                127.0;
-            double right =
-                std::clamp(static_cast<double>(pad->get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_Y)), -127.0, 127.0) /
-                127.0;
-            if (std::fabs(left) < CONFIG::DRIVE_DEADBAND) left = 0.0;
-            if (std::fabs(right) < CONFIG::DRIVE_DEADBAND) right = 0.0;
+            const double left = mappedDriveAxis(*pad, pros::E_CONTROLLER_ANALOG_LEFT_Y);
+            const double right = mappedDriveAxis(*pad, pros::E_CONTROLLER_ANALOG_RIGHT_Y);
             this->setPct(left, right);
         },
         {this});
@@ -126,14 +130,17 @@ RunCommand* DrivetrainSubsystem::doubleArcadeDrive(pros::Controller& controller)
                 this->stop();
                 return;
             }
-            double left =
-                std::clamp(static_cast<double>(pad->get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_Y) - pad->get_analog(pros::E_CONTROLLER_ANALOG_LEFT_X)), -127.0, 127.0) /
-                127.0;
-            double right =
-                std::clamp(static_cast<double>(pad->get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_Y) + pad->get_analog(pros::E_CONTROLLER_ANALOG_LEFT_X)), -127.0, 127.0) /
-                127.0;
-            if (std::fabs(left) < CONFIG::DRIVE_DEADBAND) left = 0.0;
-            if (std::fabs(right) < CONFIG::DRIVE_DEADBAND) right = 0.0;
+            const double throttle = mappedDriveAxis(*pad, pros::E_CONTROLLER_ANALOG_RIGHT_Y);
+            const double turn = mappedDriveAxis(*pad, pros::E_CONTROLLER_ANALOG_LEFT_X);
+
+            double left = throttle + turn;
+            double right = throttle - turn;
+
+            const double max = std::max(1.0, std::max(std::fabs(left), std::fabs(right)));
+
+            left /= max;
+            right /= max;
+
             this->setPct(left, right);
         },
         {this});
@@ -147,14 +154,17 @@ RunCommand* DrivetrainSubsystem::singleArcadeDrive(pros::Controller& controller)
                 this->stop();
                 return;
             }
-            double left =
-                std::clamp(static_cast<double>(pad->get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_Y) - pad->get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X)), -127.0, 127.0) /
-                127.0;
-            double right =
-                std::clamp(static_cast<double>(pad->get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_Y) + pad->get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X)), -127.0, 127.0) /
-                127.0;
-            if (std::fabs(left) < CONFIG::DRIVE_DEADBAND) left = 0.0;
-            if (std::fabs(right) < CONFIG::DRIVE_DEADBAND) right = 0.0;
+            const double throttle = mappedDriveAxis(*pad, pros::E_CONTROLLER_ANALOG_RIGHT_Y);
+            const double turn =  mappedDriveAxis(*pad, pros::E_CONTROLLER_ANALOG_RIGHT_X);
+
+            double left = throttle + turn;
+            double right = throttle - turn;
+
+            const double max = std::max(1.0, std::max(std::fabs(left), std::fabs(right)));
+
+            left /= max;
+            right /= max;
+
             this->setPct(left, right);
         },
         {this});

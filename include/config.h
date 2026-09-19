@@ -33,7 +33,8 @@ constexpr int SETTLE_MS = 150;               // ms
 constexpr double TURN_OUTPUT_LIMIT = 0.55;   // pct of 12 V
 constexpr double DRIVE_OUTPUT_LIMIT = 0.85;  // pct of 12 V
 
-constexpr double DRIVE_DEADBAND = 0.08;
+constexpr double DRIVE_DEADBAND = 0.05;
+constexpr double DRIVE_NONLINEARITY = 0.5;  // 0 = linear, 1 = cubic
 
 inline double degToRad(double deg) { return deg * PI / 180.0; }
 inline double radToDeg(double rad) { return rad * 180.0 / PI; }
@@ -49,6 +50,6 @@ enum driveType {
     SINGLE_ARCADE,
     TANK,
 };
-
 constexpr driveType DEFAULT_DRIVE_TYPE = DOUBLE_ARCADE;
+
 }  // namespace CONFIG
