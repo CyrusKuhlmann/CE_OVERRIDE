@@ -9,10 +9,11 @@
 
 #include <cmath>
 
-LocalizationSubsystem::LocalizationSubsystem(int8_t imuPort, int8_t fwdRotationPort, int8_t latRotationPort)
+LocalizationSubsystem::LocalizationSubsystem(int8_t imuPort, int8_t fwdRotationPort, int8_t latRotationPort, ILocalizer& localizer)
     : imu_(imuPort),
       fwdRotation_(fwdRotationPort),
       latRotation_(latRotationPort),
+      localizer_(localizer),
       fwdPod_(CONFIG::TRACKING_WHEEL_DIAMETER_IN),
       latPod_(CONFIG::TRACKING_WHEEL_DIAMETER_IN) {
     imu_.reset(true);
@@ -20,25 +21,11 @@ LocalizationSubsystem::LocalizationSubsystem(int8_t imuPort, int8_t fwdRotationP
 }
 
 Eigen::Vector3f LocalizationSubsystem::getPose() const {
-    return Eigen::Vector3f(static_cast<float>(odomX_), static_cast<float>(odomY_), static_cast<float>(odomTheta_));
+    return localizer_.getPose();
 }
 
 void LocalizationSubsystem::setPose(double xIn, double yIn, double thetaRad) {
-    odomX_ = xIn;
-    odomY_ = yIn;
-    odomTheta_ = CONFIG::wrapPi(thetaRad);
-}
-
-void LocalizationSubsystem::integrateOdometry(double deltaFwd, double deltaLat, double deltaTheta) {
-    if (!std::isfinite(deltaFwd) || !std::isfinite(deltaLat) || !std::isfinite(deltaTheta)) return;
-
-    const double dFwdC = Odometry::centerFwd(deltaFwd, deltaTheta);
-    const double dLatC = Odometry::centerLatRight(deltaLat, deltaTheta);
-    const auto [dx, dy] = Odometry::arcStep(dFwdC, dLatC, odomTheta_, deltaTheta);
-
-    odomX_ += dx;
-    odomY_ += dy;
-    odomTheta_ = CONFIG::wrapPi(odomTheta_ + deltaTheta);
+    localizer_.setPose(Eigen::Vector3f(xIn, yIn, thetaRad));
 }
 
 void LocalizationSubsystem::periodic() {
@@ -65,11 +52,7 @@ void LocalizationSubsystem::periodic() {
     const double deltaTheta = CONFIG::degToRad(imuRaw - prevImuDeg_);
     prevImuDeg_ = imuRaw;
 
-    integrateOdometry(deltaFwd, deltaLat, deltaTheta);
-
-    const auto pose = getPose();
-    pros::lcd::print(3, "x %.1f  y %.1f  h %.1f", pose.x(), pose.y(), CONFIG::radToDeg(pose.z()));
-    pros::lcd::print(4, "imu hdg %.1f  rot %.1f", imu_.get_heading(), imu_.get_rotation());
+    localizer_.motionUpdate(deltaFwd, deltaLat, deltaTheta);
 }
 
 InstantCommand* LocalizationSubsystem::setPoseCommand(double xIn, double yIn, double thetaRad) {

@@ -2,6 +2,7 @@
 
 #include "command/instantCommand.h"
 #include "localization/odomPod.h"
+#include "localization/localizer.h"
 
 #include "Eigen/Eigen"
 #include "pros/imu.hpp"
@@ -11,7 +12,7 @@
 
 class LocalizationSubsystem : public Subsystem {
 public:
-    LocalizationSubsystem(int8_t imuPort, int8_t fwdRotationPort, int8_t latRotationPort);
+    LocalizationSubsystem(int8_t imuPort, int8_t fwdRotationPort, int8_t latRotationPort, ILocalizer& localizer);
 
     void periodic() override;
 
@@ -38,7 +39,5 @@ private:
     bool imuReady_ = false;
     double prevImuDeg_ = 0.0;
 
-    double odomX_ = 0.0;      // in
-    double odomY_ = 0.0;      // in
-    double odomTheta_ = 0.0;  // rad
+    ILocalizer& localizer_;
 };
