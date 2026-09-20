@@ -24,7 +24,6 @@ static void schedulerLoop() {
 
 void initialize() {
     pros::lcd::initialize();
-    pros::lcd::set_text(0, "CE_OVERRIDE");
 
     subsystemInit();
 
@@ -36,9 +35,7 @@ void initialize() {
 
 void disabled() {}
 
-void competition_initialize() {
-    pros::lcd::set_text(1, "waiting for match start...");
-}
+void competition_initialize() {}
 
 void autonomous() {
     if (autonCommand != nullptr) {

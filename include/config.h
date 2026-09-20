@@ -14,18 +14,18 @@ constexpr double PI = 3.14159265358979323846;
 
 // Drivetrain
 
-constexpr int8_t LEFT_DRIVE[] = {-1, -2, -3};
-constexpr int8_t RIGHT_DRIVE[] = {4, 5, 6};
-constexpr int8_t IMU_PORT = 13;
-constexpr int8_t FWD_ROTATION_PORT = 11;
-constexpr int8_t LAT_ROTATION_PORT = -12;  // reversed in hardware
+constexpr int8_t LEFT_DRIVE[] = {2, -9, -20};
+constexpr int8_t RIGHT_DRIVE[] = {-1, 14, 10};
+constexpr int8_t IMU_PORT = 15;
+constexpr int8_t FWD_ROTATION_PORT = 3;
+constexpr int8_t LAT_ROTATION_PORT = 16;  // reversed in hardware
 
 enum driveType {
     DOUBLE_ARCADE,
     SINGLE_ARCADE,
     TANK,
 };
-constexpr driveType DEFAULT_DRIVE_TYPE = DOUBLE_ARCADE;
+constexpr driveType DEFAULT_DRIVE_TYPE = TANK;
 
 // Localization
 
@@ -54,8 +54,8 @@ constexpr double DIST_MAX_IN = 2000.0 / 25.4;
 
 // PID Controllers
 
-inline PIDGains TURN_PID = {.kP = 1.4, .kI = 0.0, .kD = 0.08};
-inline PIDGains DRIVE_PID = {.kP = 0.055, .kI = 0.001, .kD = 0.016};
+inline PIDGains TURN_PID = {.kP = 1.8, .kI = 0.02, .kD = 0.1};
+inline PIDGains DRIVE_PID = {.kP = 0.15, .kI = 0.001, .kD = 0.016};
 inline PIDGains DRIVE_HEADING_PID = {.kP = 0.9, .kI = 0.0, .kD = 0.04};
 
 constexpr double ANGLE_FINISH_RAD = 0.035;   // rad ~ 2 deg

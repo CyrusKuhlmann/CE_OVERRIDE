@@ -5,6 +5,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include "api.h"
 
 DrivetrainSubsystem::DrivetrainSubsystem(std::initializer_list<int8_t> leftPorts,
                                          std::initializer_list<int8_t> rightPorts)
@@ -50,6 +51,7 @@ RunCommand* DrivetrainSubsystem::tankDrive(pros::Controller& controller) {
             }
             const double left = mappedDriveAxis(*pad, pros::E_CONTROLLER_ANALOG_LEFT_Y);
             const double right = mappedDriveAxis(*pad, pros::E_CONTROLLER_ANALOG_RIGHT_Y);
+            pros::lcd::print(5, "left: %f, right: %f", left, right);
             this->setPct(left, right);
         },
         {this});
