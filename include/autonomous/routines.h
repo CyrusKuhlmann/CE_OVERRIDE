@@ -20,7 +20,7 @@ public:
                                   [] { return localizationSubsystem->getY(); },
                                   [] { return localizationSubsystem->getAngle(); }),
             SharedCommands::wait(1000),
-            SharedCommands::driveTo(0.0, 0.0),
+            SharedCommands::driveTo(0.0, 0.0, 1000, 1000, 1000),
             SharedCommands::print(3, "Current Pose: {}, {}, {}", [] { return localizationSubsystem->getX(); },
                                   [] { return localizationSubsystem->getY(); },
                                   [] { return localizationSubsystem->getAngle(); }),

@@ -30,8 +30,8 @@ constexpr driveType DEFAULT_DRIVE_TYPE = TANK;
 // Localization
 
 constexpr double TRACKING_WHEEL_DIAMETER_IN = 2.0;  // in
-constexpr double FWD_WHEEL_RIGHT_OFFSET_IN = 0.0;   // in; wheel is left_in = -1
-constexpr double LAT_WHEEL_FWD_OFFSET_IN = 0.0;    // in
+constexpr double FWD_WHEEL_RIGHT_OFFSET_IN = 0.0;  // in; forward pod is on the centreline
+constexpr double LAT_WHEEL_FWD_OFFSET_IN = 0.0;    // in; sideways pod is neither ahead of nor behind centre
 
 constexpr double FIELD_HALF_IN = 72.0;  // in; 12 ft field, origin at centre
 constexpr int NUM_PARTICLES = 350;

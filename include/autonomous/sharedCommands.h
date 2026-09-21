@@ -28,8 +28,9 @@ public:
         return new Rotate(drivetrainSubsystem, localizationSubsystem, CONFIG::degToRad(headingDeg), true, timeoutMs);
     }
 
-    static Command* driveTo(double xIn, double yIn) {
-        return new DriveToPoint(drivetrainSubsystem, localizationSubsystem, xIn, yIn);
+    static Command* driveTo(double xIn, double yIn, int turnTimeoutMs = 0, int driveTimeoutMs = 0, int pauseMs = 75) {
+        return new DriveToPoint(drivetrainSubsystem, localizationSubsystem, xIn, yIn, true, turnTimeoutMs,
+                                driveTimeoutMs, pauseMs);
     }
 
     static Command* wait(double ms) { return new WaitCommand(static_cast<float>(ms) * millisecond); }

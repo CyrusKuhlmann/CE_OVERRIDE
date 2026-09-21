@@ -1,57 +1,55 @@
 #pragma once
 
 #include "command/command.h"
+#include "command/waitCommand.h"
+#include "commands/driveDistance.h"
+#include "commands/rotate.h"
 #include "config.h"
-#include "controllers/pidController.h"
 #include "subsystems/drivetrain.h"
 #include "subsystems/localization.h"
 
-#include "pros/rtos.hpp"
-
-#include <algorithm>
 #include <cmath>
-#include <cstdint>
+#include <optional>
 
-// Turn to face (x, y) then drive there. Target is computed in initialize() from the current pose.
+// Turn to face (x, y), pause, then drive there. Target is computed in initialize() from the current pose.
+// Timeouts are per stage, in ms; <= 0 disables that limit.
 class DriveToPoint : public Command {
 public:
     DriveToPoint(DrivetrainSubsystem* drivetrain, LocalizationSubsystem* localization, double xIn, double yIn,
-                 bool finish = true)
-        : drivetrain_(drivetrain), localization_(localization), targetX_(xIn), targetY_(yIn), finish_(finish) {}
+                 bool finish = true, int turnTimeoutMs = 0, int driveTimeoutMs = 0, int pauseMs = 75)
+        : drivetrain_(drivetrain),
+          localization_(localization),
+          targetX_(xIn),
+          targetY_(yIn),
+          finish_(finish),
+          turnTimeoutMs_(turnTimeoutMs),
+          driveTimeoutMs_(driveTimeoutMs),
+          pauseMs_(pauseMs) {}
 
     void initialize() override {
+        turn_.reset();
+        pause_.reset();
+        drive_.reset();
+        driveStarted_ = false;
+
         const auto pose = localization_->getPose();
-        startX_ = pose.x();
-        startY_ = pose.y();
-        const double dx = targetX_ - startX_;
-        const double dy = targetY_ - startY_;
-        distanceIn_ = std::hypot(dx, dy);
+        const double dx = targetX_ - pose.x();
+        const double dy = targetY_ - pose.y();
+        if (std::hypot(dx, dy) < CONFIG::DISTANCE_FINISH_IN) {
+            phase_ = Phase::kDone;
+            return;
+        }
+
         headingRad_ = std::atan2(dx, dy);  // CW from +Y
-
-        turnPid_ = PID(CONFIG::TURN_PID);
-        turnPid_.enableContinuousInput(-CONFIG::PI, CONFIG::PI);
-        turnPid_.setOutputLimit(-CONFIG::TURN_OUTPUT_LIMIT, CONFIG::TURN_OUTPUT_LIMIT);
-        turnPid_.setSetpoint(headingRad_);
-        turnPid_.reset();
-
-        drivePid_ = PID(CONFIG::DRIVE_PID);
-        drivePid_.setOutputLimit(-CONFIG::DRIVE_OUTPUT_LIMIT, CONFIG::DRIVE_OUTPUT_LIMIT);
-        drivePid_.setSetpoint(distanceIn_);
-        drivePid_.reset();
-
-        headingPid_ = PID(CONFIG::DRIVE_HEADING_PID);
-        headingPid_.enableContinuousInput(-CONFIG::PI, CONFIG::PI);
-        headingPid_.setOutputLimit(-CONFIG::TURN_OUTPUT_LIMIT, CONFIG::TURN_OUTPUT_LIMIT);
-        headingPid_.setSetpoint(headingRad_);
-        headingPid_.reset();
-
         const double headingErr = std::fabs(CONFIG::wrapPi(headingRad_ - pose.z()));
-        phase_ = (distanceIn_ < CONFIG::DISTANCE_FINISH_IN)
-                     ? Phase::kDone
-                     : (headingErr < CONFIG::ANGLE_FINISH_RAD ? Phase::kDrive : Phase::kTurn);
+        if (headingErr < CONFIG::ANGLE_FINISH_RAD) {
+            beginPauseOrDrive();
+            return;
+        }
 
-        lastMs_ = pros::millis();
-        settleStartMs_ = 0;
+        phase_ = Phase::kTurn;
+        turn_.emplace(drivetrain_, localization_, headingRad_, true, turnTimeoutMs_);
+        turn_->initialize();
     }
 
     void execute() override {
@@ -60,53 +58,68 @@ public:
             return;
         }
 
-        const std::uint32_t now = pros::millis();
-        const double dt = std::max((now - lastMs_) * 0.001, 0.001);
-        lastMs_ = now;
+        Command* cmd = active();
+        cmd->execute();
+        if (!cmd->isFinished()) return;
 
+        cmd->end(false);
         if (phase_ == Phase::kTurn) {
-            const double out = turnPid_.calculate(localization_->getAngle(), dt);
-            drivetrain_->setPct(out, -out);
-            const double headingErr = std::fabs(CONFIG::wrapPi(headingRad_ - localization_->getAngle()));
-            if (headingErr < CONFIG::ANGLE_FINISH_RAD) {
-                phase_ = Phase::kDrive;
-                drivePid_.reset();
-                headingPid_.reset();
-                lastMs_ = now;
-            }
-            return;
+            beginPauseOrDrive();
+        } else if (phase_ == Phase::kPause) {
+            beginDrive();
+        } else {
+            phase_ = Phase::kDone;
         }
-
-        const double linear = drivePid_.calculate(traveledIn(), dt);
-        const double angular = headingPid_.calculate(localization_->getAngle(), dt);
-        drivetrain_->setPct(linear + angular, linear - angular);
     }
 
-    void end(bool /*interrupted*/) override { drivetrain_->stop(); }
+    void end(bool interrupted) override {
+        if (Command* cmd = active()) cmd->end(interrupted);
+        else drivetrain_->stop();
+    }
 
     bool isFinished() override {
-        if (!finish_) return false;
-        if (phase_ == Phase::kDone) return true;
-        if (phase_ != Phase::kDrive) return false;
-        const double err = std::fabs(distanceIn_ - traveledIn());
-        if (err > CONFIG::DISTANCE_FINISH_IN) {
-            settleStartMs_ = 0;
-            return false;
-        }
-        if (settleStartMs_ == 0) settleStartMs_ = pros::millis();
-        return (pros::millis() - settleStartMs_) >= static_cast<std::uint32_t>(CONFIG::SETTLE_MS);
+        if (phase_ != Phase::kDone) return false;
+        if (!driveStarted_) return finish_;
+        return true;
     }
 
     std::vector<Subsystem*> getRequirements() override { return {drivetrain_}; }
 
 private:
-    enum class Phase { kTurn, kDrive, kDone };
+    enum class Phase { kTurn, kPause, kDrive, kDone };
 
-    double traveledIn() const {
+    Command* active() {
+        switch (phase_) {
+            case Phase::kTurn:
+                return &*turn_;
+            case Phase::kPause:
+                return &*pause_;
+            case Phase::kDrive:
+                return &*drive_;
+            case Phase::kDone:
+                return nullptr;
+        }
+        return nullptr;
+    }
+
+    void beginPauseOrDrive() {
+        if (pauseMs_ > 0) {
+            phase_ = Phase::kPause;
+            pause_.emplace(static_cast<float>(pauseMs_) * millisecond);
+            pause_->initialize();
+            return;
+        }
+        beginDrive();
+    }
+
+    void beginDrive() {
         const auto pose = localization_->getPose();
-        const double s = std::sin(headingRad_);
-        const double c = std::cos(headingRad_);
-        return (pose.x() - startX_) * s + (pose.y() - startY_) * c;  // in
+        const double remaining = (targetX_ - pose.x()) * std::sin(headingRad_) +
+                                 (targetY_ - pose.y()) * std::cos(headingRad_);
+        phase_ = Phase::kDrive;
+        driveStarted_ = true;
+        drive_.emplace(drivetrain_, localization_, remaining, headingRad_, finish_, driveTimeoutMs_);
+        drive_->initialize();
     }
 
     DrivetrainSubsystem* drivetrain_;
@@ -114,14 +127,13 @@ private:
     double targetX_;  // in
     double targetY_;  // in
     bool finish_;
-    double startX_ = 0.0;      // in
-    double startY_ = 0.0;      // in
-    double distanceIn_ = 0.0;  // in
-    double headingRad_ = 0.0;  // rad
+    int turnTimeoutMs_;   // ms; <= 0 disables
+    int driveTimeoutMs_;  // ms; <= 0 disables
+    int pauseMs_;         // ms between turn and drive
+    double headingRad_ = 0.0;
     Phase phase_ = Phase::kTurn;
-    PID turnPid_{CONFIG::TURN_PID};
-    PID drivePid_{CONFIG::DRIVE_PID};
-    PID headingPid_{CONFIG::DRIVE_HEADING_PID};
-    std::uint32_t lastMs_ = 0;
-    std::uint32_t settleStartMs_ = 0;
+    bool driveStarted_ = false;
+    std::optional<Rotate> turn_;
+    std::optional<WaitCommand> pause_;
+    std::optional<DriveDistance> drive_;
 };

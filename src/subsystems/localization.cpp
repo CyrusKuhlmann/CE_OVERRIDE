@@ -52,7 +52,10 @@ void LocalizationSubsystem::periodic() {
     const double deltaTheta = CONFIG::degToRad(imuRaw - prevImuDeg_);
     prevImuDeg_ = imuRaw;
 
-    localizer_.motionUpdate(deltaFwd, deltaLat, deltaTheta);
+    // Pods read wheel travel. Offsets convert that to travel of the robot centre.
+    // The lateral pod is reversed in hardware, so positive already means right.
+    localizer_.motionUpdate(Odometry::centerFwd(deltaFwd, deltaTheta), Odometry::centerLatRight(deltaLat, deltaTheta),
+                            deltaTheta);
 }
 
 InstantCommand* LocalizationSubsystem::setPoseCommand(double xIn, double yIn, double thetaRad) {
