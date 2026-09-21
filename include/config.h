@@ -30,8 +30,8 @@ constexpr driveType DEFAULT_DRIVE_TYPE = TANK;
 // Localization
 
 constexpr double TRACKING_WHEEL_DIAMETER_IN = 2.0;  // in
-constexpr double FWD_WHEEL_RIGHT_OFFSET_IN = 1.0;   // in; wheel is left_in = -1
-constexpr double LAT_WHEEL_FWD_OFFSET_IN = -5.5;    // in
+constexpr double FWD_WHEEL_RIGHT_OFFSET_IN = 0.0;   // in; wheel is left_in = -1
+constexpr double LAT_WHEEL_FWD_OFFSET_IN = 0.0;    // in
 
 constexpr double FIELD_HALF_IN = 72.0;  // in; 12 ft field, origin at centre
 constexpr int NUM_PARTICLES = 350;
@@ -58,11 +58,15 @@ inline PIDGains TURN_PID = {.kP = 1.8, .kI = 0.02, .kD = 0.1};
 inline PIDGains DRIVE_PID = {.kP = 0.15, .kI = 0.001, .kD = 0.016};
 inline PIDGains DRIVE_HEADING_PID = {.kP = 0.9, .kI = 0.0, .kD = 0.04};
 
-constexpr double ANGLE_FINISH_RAD = 0.035;   // rad ~ 2 deg
-constexpr double DISTANCE_FINISH_IN = 0.75;  // in
-constexpr int SETTLE_MS = 150;               // ms
-constexpr double TURN_OUTPUT_LIMIT = 0.55;   // pct of 12 V
-constexpr double DRIVE_OUTPUT_LIMIT = 0.85;  // pct of 12 V
+constexpr double ANGLE_FINISH_RAD = 0.035;       // rad ~ 2 deg
+constexpr double DISTANCE_FINISH_IN = 0.75;      // in
+constexpr double ANGLE_CORRECTION_RAD = 0.015;   // rad ~ 0.9 deg; settle here after an overshoot
+constexpr double DISTANCE_CORRECTION_IN = 0.3;   // in; settle here after an overshoot
+constexpr int SETTLE_MS = 150;                   // ms
+constexpr double TURN_OUTPUT_LIMIT = 0.55;       // pct of 12 V
+constexpr double DRIVE_OUTPUT_LIMIT = 0.85;      // pct of 12 V
+constexpr double TURN_CORRECTION_MIN = 0.14;     // pct of 12 V; floor after an overshoot
+constexpr double DRIVE_CORRECTION_MIN = 0.16;    // pct of 12 V; floor after an overshoot
 
 // Operator Control
 
