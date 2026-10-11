@@ -16,6 +16,8 @@ constexpr double PI = 3.14159265358979323846;
 
 constexpr int8_t LEFT_DRIVE[] = {2, -9, -20};
 constexpr int8_t RIGHT_DRIVE[] = {-1, 14, 10};
+constexpr int8_t INTAKE_PORT = 18;
+constexpr int8_t LIFT_PORTS[] = {8, 5};
 constexpr int8_t IMU_PORT = 15;
 constexpr int8_t FWD_ROTATION_PORT = 3;
 constexpr int8_t LAT_ROTATION_PORT = 16;  // reversed in hardware
@@ -30,8 +32,8 @@ constexpr driveType DEFAULT_DRIVE_TYPE = TANK;
 // Localization
 
 constexpr double TRACKING_WHEEL_DIAMETER_IN = 2.0;  // in
-constexpr double FWD_WHEEL_RIGHT_OFFSET_IN = 0.0;  // in; forward pod is on the centreline
-constexpr double LAT_WHEEL_FWD_OFFSET_IN = 0.0;    // in; sideways pod is neither ahead of nor behind centre
+constexpr double FWD_WHEEL_RIGHT_OFFSET_IN = 0.0;  // in, side to side
+constexpr double LAT_WHEEL_FWD_OFFSET_IN = 0.45;    // in, forward back
 
 constexpr double FIELD_HALF_IN = 72.0;  // in; 12 ft field, origin at centre
 constexpr int NUM_PARTICLES = 350;
@@ -55,7 +57,7 @@ constexpr double DIST_MAX_IN = 2000.0 / 25.4;
 // PID Controllers
 
 inline PIDGains TURN_PID = {.kP = 1.8, .kI = 0.02, .kD = 0.1};
-inline PIDGains DRIVE_PID = {.kP = 0.15, .kI = 0.001, .kD = 0.016};
+inline PIDGains DRIVE_PID = {.kP = 0.167, .kI = 0.001, .kD = 0.03};
 inline PIDGains DRIVE_HEADING_PID = {.kP = 0.9, .kI = 0.0, .kD = 0.04};
 
 constexpr double ANGLE_FINISH_RAD = 0.035;       // rad ~ 2 deg

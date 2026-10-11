@@ -19,7 +19,7 @@ inline void subsystemInit() {
         new LocalizationSubsystem(CONFIG::IMU_PORT, CONFIG::FWD_ROTATION_PORT, CONFIG::LAT_ROTATION_PORT, *localizer);
     drivetrainSubsystem =
         new DrivetrainSubsystem({CONFIG::LEFT_DRIVE[0], CONFIG::LEFT_DRIVE[1], CONFIG::LEFT_DRIVE[2]},
-                                {CONFIG::RIGHT_DRIVE[0], CONFIG::RIGHT_DRIVE[1], CONFIG::RIGHT_DRIVE[2]});
+                                {CONFIG::RIGHT_DRIVE[0], CONFIG::RIGHT_DRIVE[1], CONFIG::RIGHT_DRIVE[2]}, CONFIG::INTAKE_PORT, {CONFIG::LIFT_PORTS[0], CONFIG::LIFT_PORTS[1]});
 
     CommandScheduler::registerSubsystem(localizationSubsystem, new RunCommand([] {}, {localizationSubsystem}));
     CommandScheduler::registerSubsystem(drivetrainSubsystem, drivetrainSubsystem->drive(primary));
