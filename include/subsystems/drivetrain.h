@@ -10,7 +10,7 @@
 
 class DrivetrainSubsystem : public Subsystem {
 public:
-    DrivetrainSubsystem(std::initializer_list<int8_t> leftPorts, std::initializer_list<int8_t> rightPorts, int intakePorts, std::initializer_list<int8_t> liftPorts);
+    DrivetrainSubsystem(std::initializer_list<int8_t> leftPorts, std::initializer_list<int8_t> rightPorts);
 
     void periodic() override {}
 
@@ -29,6 +29,4 @@ private:
 
     pros::MotorGroup leftMotors_;
     pros::MotorGroup rightMotors_;
-    pros::Motor intakeMotor_;
-    pros::MotorGroup liftMotors_;
 };

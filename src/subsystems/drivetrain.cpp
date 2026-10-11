@@ -8,13 +8,10 @@
 #include "api.h"
 
 DrivetrainSubsystem::DrivetrainSubsystem(std::initializer_list<int8_t> leftPorts,
-                                         std::initializer_list<int8_t> rightPorts, int intakePort, std::initializer_list<int8_t> liftPorts)
-    : leftMotors_(leftPorts), rightMotors_(rightPorts), intakeMotor_(intakePort), liftMotors_(liftPorts) {
+                                         std::initializer_list<int8_t> rightPorts)
+    : leftMotors_(leftPorts), rightMotors_(rightPorts) {
     leftMotors_.set_gearing_all(pros::MotorGears::blue);
     rightMotors_.set_gearing_all(pros::MotorGears::blue);
-    intakeMotor_.set_gearing(pros::MotorGear::blue);
-    liftMotors_.set_gearing(pros::MotorGear::blue, 0);
-    liftMotors_.set_gearing(pros::MotorGear::green, 1);
     leftMotors_.set_encoder_units_all(pros::MotorUnits::degrees);
     rightMotors_.set_encoder_units_all(pros::MotorUnits::degrees);
     leftMotors_.set_brake_mode_all(pros::MotorBrake::brake);
@@ -54,24 +51,6 @@ RunCommand* DrivetrainSubsystem::tankDrive(pros::Controller& controller) {
             }
             const double left = mappedDriveAxis(*pad, pros::E_CONTROLLER_ANALOG_LEFT_Y);
             const double right = mappedDriveAxis(*pad, pros::E_CONTROLLER_ANALOG_RIGHT_Y);
-
-            // intake stuff
-            if (pad->get_digital(pros::E_CONTROLLER_DIGITAL_L1) == 1) {
-                intakeMotor_.move_voltage(12000);
-            } else if (pad->get_digital(pros::E_CONTROLLER_DIGITAL_L2) == 1) {
-                intakeMotor_.move_voltage(-12000);
-            } else {
-                intakeMotor_.move_voltage(0);
-            }
-
-            // lift
-            if (pad->get_digital(pros::E_CONTROLLER_DIGITAL_R1) == 1) {
-                liftMotors_.move_voltage(12000);
-            } else if (pad->get_digital(pros::E_CONTROLLER_DIGITAL_R2) == 1) {
-                liftMotors_.move_voltage(-12000);
-            } else {
-                liftMotors_.move_voltage(0);
-            }
 
             this->setPct(left, right);
         },
