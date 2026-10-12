@@ -1,11 +1,11 @@
 #include "subsystems/lift.h"
 #include "command/runCommand.h"
 
-LiftSubsystem::LiftSubsystem(std::initializer_list<int8_t> ports)
-    : liftMotors_(ports) {
-    liftMotors_.set_gearing_all(pros::MotorGears::blue);
-    liftMotors_.set_encoder_units_all(pros::MotorUnits::degrees);
-    liftMotors_.set_brake_mode_all(pros::MotorBrake::brake);
+LiftSubsystem::LiftSubsystem(int port)
+    : liftMotor_(port) {
+    liftMotor_.set_gearing(pros::MotorGear::green);
+    liftMotor_.set_encoder_units(pros::MotorUnits::degrees);
+    liftMotor_.set_brake_mode(pros::MotorBrake::brake);
 }
 
 void LiftSubsystem::setPct(double pct) {
@@ -13,7 +13,7 @@ void LiftSubsystem::setPct(double pct) {
 }
 
 void LiftSubsystem::setVoltages(int mv) {
-    liftMotors_.move_voltage(mv);
+    liftMotor_.move_voltage(mv);
 }
 
 void LiftSubsystem::stop() {

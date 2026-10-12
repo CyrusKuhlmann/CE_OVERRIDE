@@ -6,16 +6,24 @@
 
 class DriverMacros {
  public:
-  static Command* intakeToClaw() { // close claw, raise lift for 1 second on 50% power, finally wrist up
+  static Command* intakeToClaw() {  // close claw, raise lift for 1 second on 100% power, finally wrist up
     return new Sequence({
-      new FunctionalCommand([] {}, []{}, [](bool) { clawSubsystem->clawOpen(); }, [] { return false; }, {clawSubsystem}),
-      liftFor(50, 1000),
-      new FunctionalCommand([] {}, []{}, [](bool) { clawSubsystem->wristUp(); }, [] { return false; }, {clawSubsystem}),
+        clawSubsystem->clawClose(),
+        liftFor(100, 1000),
+        clawSubsystem->wristUp(),
     });
-   };
+  };
+
+  static Command* clawToIntake() {  // open claw, wrist down
+    return new Sequence({
+        clawSubsystem->clawOpen(),
+        clawSubsystem->wristDown(),
+    });
+  };
 
   static void bind(CommandController& pad) {
-    pad.getTrigger(pros::E_CONTROLLER_DIGITAL_A)->onTrue(intakeToClaw());
+    pad.getTrigger(pros::E_CONTROLLER_DIGITAL_UP)->onTrue(intakeToClaw());
+    pad.getTrigger(pros::E_CONTROLLER_DIGITAL_DOWN)->onTrue(clawToIntake());
   }
 
  private:

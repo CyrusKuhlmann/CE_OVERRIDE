@@ -1,5 +1,6 @@
 #pragma once
 
+#include "command/instantCommand.h"
 #include "command/runCommand.h"
 #include "api.h"
 
@@ -13,10 +14,12 @@ public:
 
     void setVoltages(int mv) {};
 
-    RunCommand* wristUp();
-    RunCommand* wristDown();
-    RunCommand* clawOpen();
-    RunCommand* clawClose();
+    InstantCommand* wristUp();
+    InstantCommand* wristDown();
+    InstantCommand* clawOpen();
+    InstantCommand* clawClose();
+
+    RunCommand* toggle(pros::Controller& controller);
 
     void stop();
 private:

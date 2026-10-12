@@ -28,12 +28,12 @@ inline void subsystemInit() {
         new DrivetrainSubsystem({CONFIG::LEFT_DRIVE[0], CONFIG::LEFT_DRIVE[1], CONFIG::LEFT_DRIVE[2]},
                                 {CONFIG::RIGHT_DRIVE[0], CONFIG::RIGHT_DRIVE[1], CONFIG::RIGHT_DRIVE[2]});
     intakeSubsystem = new IntakeSubsystem(CONFIG::INTAKE_PORT);
-    liftSubsystem = new LiftSubsystem({CONFIG::LIFT_PORTS[0], CONFIG::LIFT_PORTS[1]});
+    liftSubsystem = new LiftSubsystem(CONFIG::LIFT_PORT);
     clawSubsystem = new ClawSubsystem(CONFIG::WRIST_PORT, CONFIG::CLAW_PORT);
 
     CommandScheduler::registerSubsystem(localizationSubsystem, new RunCommand([] {}, {localizationSubsystem}));
     CommandScheduler::registerSubsystem(drivetrainSubsystem, drivetrainSubsystem->drive(primary));
     CommandScheduler::registerSubsystem(intakeSubsystem, intakeSubsystem->intake(primary));
     CommandScheduler::registerSubsystem(liftSubsystem, liftSubsystem->lift(primary));
-    CommandScheduler::registerSubsystem(clawSubsystem, new RunCommand([] {}, {clawSubsystem}));
+    CommandScheduler::registerSubsystem(clawSubsystem, clawSubsystem->toggle(primary));
 }
