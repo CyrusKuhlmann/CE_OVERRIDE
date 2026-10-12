@@ -8,6 +8,7 @@
 
 #include "autonomous/autonCommands.h"
 #include "command/commandScheduler.h"
+#include "macros/driverMacros.h"
 #include "subsystems/subsystems.h"
 
 #include <cstdint>
@@ -26,6 +27,7 @@ void initialize() {
     pros::lcd::initialize();
 
     subsystemInit();
+    DriverMacros::bind(primary);  // before the scheduler task polls the event loop
 
     pros::Task scheduler(schedulerLoop, "Command Scheduler");
 

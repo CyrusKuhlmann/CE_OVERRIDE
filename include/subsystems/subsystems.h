@@ -1,5 +1,6 @@
 #pragma once
 
+#include "command/commandController.h"
 #include "command/commandScheduler.h"
 #include "command/runCommand.h"
 #include "config.h"
@@ -17,7 +18,7 @@ inline IntakeSubsystem* intakeSubsystem = nullptr;
 inline LiftSubsystem* liftSubsystem = nullptr;
 inline ClawSubsystem* clawSubsystem = nullptr;
 inline LocalizationSubsystem* localizationSubsystem = nullptr;
-inline pros::Controller primary(pros::E_CONTROLLER_MASTER);
+inline CommandController primary(pros::E_CONTROLLER_MASTER);
 
 inline void subsystemInit() {
     ILocalizer* localizer = new OdometryLocalizer();

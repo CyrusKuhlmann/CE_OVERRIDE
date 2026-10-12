@@ -26,6 +26,12 @@ private:
 	std::vector<Command*> toCancel;
 
 	CommandScheduler() = default;
+
+	// Free every subsystem this command holds. Matches on the holder instead of calling
+	// getRequirements() again, which can change while the command runs (ConditionalCommand)
+	static void release(Command* command) {
+		std::erase_if(getInstance().requirements, [command](const auto& entry) { return entry.second == command; });
+	}
 public:
 	// Singleton pattern
 	static CommandScheduler& getInstance() {
@@ -53,8 +59,10 @@ public:
 			return;
 		}
 
+		// Defer until the command loop is done, it is iterating scheduledCommands
 		if (instance.inRunLoop) {
 			instance.toSchedule.emplace_back(command);
+			return;
 		}
 
 		// return if competition is disabled
@@ -77,8 +85,15 @@ public:
 
 		if (all_interruptible) {
 			for (auto intersect : intersection) {
+				// A command holding several of these subsystems is listed once for each, only end it once
+				if (!scheduled(intersect)) {
+					continue;
+				}
+
 				intersect->end(true);
 				std::erase(instance.scheduledCommands, intersect);
+				// Free all of its subsystems, not just the ones being taken, so their defaults come back
+				release(intersect);
 			}
 
 			for (auto requirement : requirements) {
@@ -119,15 +134,15 @@ public:
 
 		instance.inRunLoop = true;
 
-		for (auto command : instance.scheduledCommands) {
+		// Iterate a copy, finished commands are erased from scheduledCommands inside the loop
+		const std::vector<Command*> running = instance.scheduledCommands;
+		for (auto command : running) {
 			command->execute();
 
 			if (command->isFinished()) {
 				command->end(false);
 
-				for (auto requirement : command->getRequirements()) {
-					instance.requirements.erase(requirement);
-				}
+				release(command);
 
 				std::erase(instance.scheduledCommands, command);
 			}
@@ -175,8 +190,10 @@ public:
 	static void cancel(Command* command) {
 		CommandScheduler& instance = getInstance();
 
+		// Defer until the command loop is done, it is iterating scheduledCommands
 		if (instance.inRunLoop) {
 			instance.toCancel.emplace_back(command);
+			return;
 		}
 
 		if (scheduled(command)) {
@@ -184,9 +201,7 @@ public:
 
 			std::erase(instance.scheduledCommands, command);
 
-			for (auto requirement : command->getRequirements()) {
-				instance.requirements.erase(requirement);
-			}
+			release(command);
 		}
 	}
 };
