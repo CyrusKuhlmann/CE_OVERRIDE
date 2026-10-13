@@ -56,21 +56,39 @@ constexpr double DIST_FOV_LONG_DEG = 24.0;
 constexpr double DIST_NEAR_IN = 200.0 / 25.4;
 constexpr double DIST_MAX_IN = 2000.0 / 25.4;
 
-// PID Controllers
+// Motion Controllers
+// Lateral errors are in inches, angular errors in radians. Speeds are pct of 12 V.
 
-inline PIDGains TURN_PID = {.kP = 1.8, .kI = 0.02, .kD = 0.1};
-inline PIDGains DRIVE_PID = {.kP = 0.167, .kI = 0.001, .kD = 0.03};
-inline PIDGains DRIVE_HEADING_PID = {.kP = 0.9, .kI = 0.0, .kD = 0.04};
+inline ControllerSettings LATERAL_CONTROLLER = {
+    .kP = 0.167,
+    .kI = 0.001,
+    .kD = 0.03,
+    .windupRange = 3.0,  // in
+    .smallError = 0.75,  // in
+    .smallErrorTimeoutMs = 150,
+    .largeError = 3.0,  // in
+    .largeErrorTimeoutMs = 500,
+    .slew = 0.0,
+};
 
-constexpr double ANGLE_FINISH_RAD = 0.035;       // rad ~ 2 deg
-constexpr double DISTANCE_FINISH_IN = 0.75;      // in
-constexpr double ANGLE_CORRECTION_RAD = 0.015;   // rad ~ 0.9 deg; settle here after an overshoot
-constexpr double DISTANCE_CORRECTION_IN = 0.3;   // in; settle here after an overshoot
-constexpr int SETTLE_MS = 150;                   // ms
-constexpr double TURN_OUTPUT_LIMIT = 0.55;       // pct of 12 V
-constexpr double DRIVE_OUTPUT_LIMIT = 0.85;      // pct of 12 V
-constexpr double TURN_CORRECTION_MIN = 0.14;     // pct of 12 V; floor after an overshoot
-constexpr double DRIVE_CORRECTION_MIN = 0.16;    // pct of 12 V; floor after an overshoot
+inline ControllerSettings ANGULAR_CONTROLLER = {
+    .kP = 1.8,
+    .kI = 0.02,
+    .kD = 0.1,
+    .windupRange = 0.087,  // rad ~ 5 deg
+    .smallError = 0.035,   // rad ~ 2 deg
+    .smallErrorTimeoutMs = 150,
+    .largeError = 0.052,  // rad ~ 3 deg
+    .largeErrorTimeoutMs = 500,
+    .slew = 0.0,
+};
+
+// Heading correction while driving; only the gains are used.
+inline ControllerSettings HEADING_CONTROLLER = {.kP = 0.9, .kI = 0.0, .kD = 0.04};
+
+constexpr double TURN_MAX_SPEED = 0.55;   // pct of 12 V
+constexpr double DRIVE_MAX_SPEED = 0.85;  // pct of 12 V
+constexpr double DRIVE_CLOSE_IN = 7.5;    // in; inside this, driving stops steering and may reverse
 
 // Operator Control
 

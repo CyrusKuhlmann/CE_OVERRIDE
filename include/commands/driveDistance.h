@@ -1,133 +1,102 @@
 #pragma once
 
 #include "command/command.h"
+#include "commands/motionUtil.h"
 #include "config.h"
 #include "controllers/pidController.h"
 #include "subsystems/drivetrain.h"
 #include "subsystems/localization.h"
 
-#include "pros/rtos.hpp"
-
 #include <algorithm>
 #include <cmath>
-#include <cstdint>
 
-// Drive a signed distance (in) while holding a field heading (rad).
+// Drive a signed distance (in) while holding a field heading (rad). Defaults to the heading at start.
+// Speeds are pct of 12 V. A nonzero minSpeed enables motion chaining: the drive hands off at speed
+// once within earlyExitIn of the target.
 class DriveDistance : public Command {
 public:
     DriveDistance(DrivetrainSubsystem* drivetrain, LocalizationSubsystem* localization, double distanceIn,
-                  double headingRad = INFINITY, bool finish = true, int timeoutMs = 0)
+                  double headingRad = INFINITY, int timeoutMs = 0, double maxSpeed = CONFIG::DRIVE_MAX_SPEED,
+                  double minSpeed = 0.0, double earlyExitIn = 0.0)
         : drivetrain_(drivetrain),
           localization_(localization),
           distanceIn_(distanceIn),
           headingRad_(headingRad),
-          finish_(finish),
-          timeoutMs_(timeoutMs) {}
+          maxSpeed_(maxSpeed),
+          minSpeed_(minSpeed),
+          earlyExitIn_(earlyExitIn),
+          timeout_(timeoutMs) {}
 
     void initialize() override {
         const auto pose = localization_->getPose();
-        startX_ = pose.x();
-        startY_ = pose.y();
-        if (std::isinf(headingRad_)) headingRad_ = pose.z();
+        heading_ = std::isinf(headingRad_) ? pose.z() : headingRad_;
+        targetX_ = pose.x() + distanceIn_ * std::sin(heading_);
+        targetY_ = pose.y() + distanceIn_ * std::cos(heading_);
+        direction_ = distanceIn_ < 0.0 ? -1.0 : 1.0;
 
-        drivePid_ = PID(CONFIG::DRIVE_PID);
-        drivePid_.setOutputLimit(-CONFIG::DRIVE_OUTPUT_LIMIT, CONFIG::DRIVE_OUTPUT_LIMIT);
-        drivePid_.setSetpoint(distanceIn_);
-        drivePid_.reset();
-
-        headingPid_ = PID(CONFIG::DRIVE_HEADING_PID);
-        headingPid_.enableContinuousInput(-CONFIG::PI, CONFIG::PI);
-        headingPid_.setOutputLimit(-CONFIG::TURN_OUTPUT_LIMIT, CONFIG::TURN_OUTPUT_LIMIT);
-        headingPid_.setSetpoint(headingRad_);
+        lateralPid_.reset();
         headingPid_.reset();
-
-        lastMs_ = pros::millis();
-        startMs_ = lastMs_;
-        settleStartMs_ = 0;
-        overshot_ = false;
-        approachSign_ = 0.0;
+        smallExit_.reset();
+        largeExit_.reset();
+        timeout_.start();
+        prevLateral_ = 0.0;
+        close_ = false;
+        chained_ = false;
     }
 
     void execute() override {
-        const std::uint32_t now = pros::millis();
-        const double dt = std::max((now - lastMs_) * 0.001, 0.001);
-        lastMs_ = now;
+        const auto pose = localization_->getPose();
+        const double remaining = (targetX_ - pose.x()) * std::sin(heading_) +
+                                 (targetY_ - pose.y()) * std::cos(heading_);  // in, + is ahead along heading
+        if (std::fabs(remaining) < CONFIG::DRIVE_CLOSE_IN) close_ = true;
 
-        const double traveled = traveledIn();
-        const double err = distanceIn_ - traveled;
-        noteOvershoot(err, drivePid_);
+        // Motion chaining: hand off at speed once within earlyExitRange of the target line.
+        if (minSpeed_ != 0.0 && remaining * direction_ <= earlyExitIn_) {
+            chained_ = true;
+            return;
+        }
 
-        double linear = drivePid_.calculate(traveled, dt);
-        linear = correctedOutput(linear, err, exitTolerance(), CONFIG::DRIVE_CORRECTION_MIN, overshot_);
-        const double angular = headingPid_.calculate(localization_->getAngle(), dt);
-        drivetrain_->setPct(linear + angular, linear - angular);
+        smallExit_.update(remaining);
+        largeExit_.update(remaining);
+
+        const double angular = std::clamp(headingPid_.update(CONFIG::wrapPi(heading_ - pose.z())), -maxSpeed_,
+                                          maxSpeed_);
+        double lateral = motion::shapeLateral(lateralPid_.update(remaining), prevLateral_, direction_, close_,
+                                              maxSpeed_, minSpeed_, CONFIG::LATERAL_CONTROLLER.slew);
+        lateral = motion::prioritizeAngular(lateral, angular, maxSpeed_);
+        prevLateral_ = lateral;
+
+        drivetrain_->setPct(lateral + angular, lateral - angular);
     }
 
     void end(bool /*interrupted*/) override { drivetrain_->stop(); }
 
     bool isFinished() override {
-        if (timedOut()) return true;
-        if (!finish_) return false;
-        const double err = std::fabs(distanceIn_ - traveledIn());
-        if (err > exitTolerance()) {
-            settleStartMs_ = 0;
-            return false;
-        }
-        if (settleStartMs_ == 0) settleStartMs_ = pros::millis();
-        return (pros::millis() - settleStartMs_) >= static_cast<std::uint32_t>(CONFIG::SETTLE_MS);
+        return chained_ || timeout_.isDone() || smallExit_.getExit() || largeExit_.getExit();
     }
 
     std::vector<Subsystem*> getRequirements() override { return {drivetrain_}; }
 
 private:
-    double traveledIn() const {
-        const auto pose = localization_->getPose();
-        const double s = std::sin(headingRad_);
-        const double c = std::cos(headingRad_);
-        return (pose.x() - startX_) * s + (pose.y() - startY_) * c;  // in
-    }
-
-    double exitTolerance() const {
-        return overshot_ ? CONFIG::DISTANCE_CORRECTION_IN : CONFIG::DISTANCE_FINISH_IN;
-    }
-
-    bool timedOut() const {
-        return timeoutMs_ > 0 && (pros::millis() - startMs_) >= static_cast<std::uint32_t>(timeoutMs_);
-    }
-
-    // Latch the first time the remaining distance changes sign, then drive back.
-    void noteOvershoot(double err, PID& pid) {
-        if (overshot_) return;
-        if (approachSign_ == 0.0) {
-            if (std::fabs(err) > 1e-4) approachSign_ = std::copysign(1.0, err);
-            return;
-        }
-        if (err * approachSign_ < 0.0) {
-            overshot_ = true;
-            settleStartMs_ = 0;
-            pid.reset();
-        }
-    }
-
-    static double correctedOutput(double output, double err, double tolerance, double minOutput, bool correcting) {
-        if (!correcting || std::fabs(err) <= tolerance) return output;
-        if (output * err > 0.0 && std::fabs(output) >= minOutput) return output;
-        return std::copysign(minOutput, err);
-    }
-
     DrivetrainSubsystem* drivetrain_;
     LocalizationSubsystem* localization_;
     double distanceIn_;  // in
-    double headingRad_;  // rad
-    bool finish_;
-    int timeoutMs_;  // ms; <= 0 disables
-    double startX_ = 0.0;  // in
-    double startY_ = 0.0;  // in
-    PID drivePid_{CONFIG::DRIVE_PID};
-    PID headingPid_{CONFIG::DRIVE_HEADING_PID};
-    std::uint32_t lastMs_ = 0;
-    std::uint32_t startMs_ = 0;
-    std::uint32_t settleStartMs_ = 0;
-    bool overshot_ = false;
-    double approachSign_ = 0.0;
+    double headingRad_;  // rad; INFINITY holds the heading at start
+    double maxSpeed_;     // pct of 12 V
+    double minSpeed_;     // pct of 12 V
+    double earlyExitIn_;  // in
+    motion::Timeout timeout_;
+
+    PID lateralPid_{CONFIG::LATERAL_CONTROLLER};
+    PID headingPid_{CONFIG::HEADING_CONTROLLER};
+    ExitCondition smallExit_{CONFIG::LATERAL_CONTROLLER.smallError, CONFIG::LATERAL_CONTROLLER.smallErrorTimeoutMs};
+    ExitCondition largeExit_{CONFIG::LATERAL_CONTROLLER.largeError, CONFIG::LATERAL_CONTROLLER.largeErrorTimeoutMs};
+
+    double heading_ = 0.0;    // rad
+    double targetX_ = 0.0;    // in
+    double targetY_ = 0.0;    // in
+    double direction_ = 1.0;  // +1 forwards, -1 backwards
+    double prevLateral_ = 0.0;
+    bool close_ = false;
+    bool chained_ = false;
 };
