@@ -4,35 +4,38 @@
 #include "autonomous/sharedCommands.h"
 #include "command/sequence.h"
 
+#include <cstdio>
+
 class Routines {
 public:
-    static constexpr auton::StartPose kTestStart{0.0, -48.0, 0.0};
+    static constexpr auton::StartPose kTestStart{-24.0, -24.0, 0.0};
 
     static Command* test() {
-        return new Sequence({
-            SharedCommands::driveTo(-24.0, 0.0),
-            SharedCommands::print(1, "Current Pose: {}, {}, {}", [] { return std::round(localizationSubsystem->getX()*10)/10; },
-                                  [] { return std::round(localizationSubsystem->getY()*10)/10; },
-                                  [] { return std::round(localizationSubsystem->getAngle()*10)/10; }),
-            SharedCommands::wait(1000),
-            SharedCommands::driveTo(0.0, 24.0),
-            SharedCommands::print(2, "Current Pose: {}, {}, {}", [] { return std::round(localizationSubsystem->getX()*10)/10; },
-                                  [] { return std::round(localizationSubsystem->getY()*10)/10; },
-                                  [] { return std::round(localizationSubsystem->getAngle()*10)/10; }),
-            SharedCommands::wait(1000),
-            SharedCommands::driveTo(24, 0.0),
-            SharedCommands::print(3, "Current Pose: {}, {}, {}", [] { return std::round(localizationSubsystem->getX()*10)/10; },
-                                  [] { return std::round(localizationSubsystem->getY()*10)/10; },
-                                  [] { return std::round(localizationSubsystem->getAngle()*10)/10; }),
-            SharedCommands::driveTo(0.0, -48.0),
-            SharedCommands::print(4, "Current Pose: {}, {}, {}", [] { return std::round(localizationSubsystem->getX()*10)/10; },
-                                  [] { return std::round(localizationSubsystem->getY()*10)/10; },
-                                  [] { return std::round(localizationSubsystem->getAngle()*10)/10; }),
-            SharedCommands::turnTo(0.0),
-            SharedCommands::print(5, "Current Pose: {}, {}, {}", [] { return std::round(localizationSubsystem->getX()*10)/10; },
-                                  [] { return std::round(localizationSubsystem->getY()*10)/10; },
-                                  [] { return std::round(localizationSubsystem->getAngle()*10)/10; }),
-            SharedCommands::stop(),
+        return new ParallelCommandGroup({
+            new Sequence({
+                SharedCommands::turnTo(270),
+                SharedCommands::turnTo(180),
+                SharedCommands::turnTo(90),
+                SharedCommands::turnTo(0),
+                SharedCommands::turnTo(270),
+                SharedCommands::turnTo(180),
+                SharedCommands::turnTo(90),
+                SharedCommands::turnTo(0),
+                SharedCommands::turnTo(270),
+                SharedCommands::turnTo(180),
+                SharedCommands::turnTo(90),
+                SharedCommands::turnTo(0),
+            }),
+            (new RunCommand(
+                 [] {
+                     const auto pose = localizationSubsystem->getPose();
+                     char buf[48];
+                     const double headingDeg = CONFIG::radToDeg(CONFIG::wrapPi(pose.z()));
+                     std::snprintf(buf, sizeof(buf), "x: %.2f y: %.2f h: %.2f deg", pose.x(), pose.y(), headingDeg);
+                     pros::lcd::set_text(0, buf);
+                 },
+                 {}))
+                ->until([] { return !pros::competition::is_autonomous(); }),
         });
     }
 };

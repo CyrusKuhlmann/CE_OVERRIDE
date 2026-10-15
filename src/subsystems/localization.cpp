@@ -49,7 +49,7 @@ void LocalizationSubsystem::periodic() {
 
     const double deltaFwd = fwdPod_.update(fwdRaw);
     const double deltaLat = latPod_.update(latRaw);
-    const double deltaTheta = CONFIG::degToRad(imuRaw - prevImuDeg_);
+    const double deltaTheta = CONFIG::degToRad((imuRaw - prevImuDeg_) * CONFIG::IMU_HEADING_SCALE);
     prevImuDeg_ = imuRaw;
 
     // Pods read wheel travel. Offsets convert that to travel of the robot centre.

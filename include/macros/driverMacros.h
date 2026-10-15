@@ -7,14 +7,12 @@
 class DriverMacros {
  public:
   static Command* intakeToClaw() {  
-    return new ParallelCommandGroup({
-      intakeFor(100, 500),
-      new Sequence({
+      return new Sequence({
+        intakeFor(100, 200),
         clawSubsystem->clawClose(),
-        liftFor(100, 1000),
+        liftFor(100, 900),
         clawSubsystem->wristUp(),  
-      }),
-    });
+      });
   };
 
   static Command* clawToIntake() {  // open claw, wrist down

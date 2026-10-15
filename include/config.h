@@ -34,8 +34,13 @@ constexpr driveType DEFAULT_DRIVE_TYPE = TANK;
 // Localization
 
 constexpr double TRACKING_WHEEL_DIAMETER_IN = 2.0;  // in
-constexpr double FWD_WHEEL_RIGHT_OFFSET_IN = 0.0;  // in, side to side
-constexpr double LAT_WHEEL_FWD_OFFSET_IN = 0.45;    // in, forward back
+constexpr double FWD_WHEEL_RIGHT_OFFSET_IN = 0.1;  // in, side to side
+constexpr double LAT_WHEEL_FWD_OFFSET_IN = 0.225;    // in, forward back
+
+// get_rotation() under-reports. A 3-turn spin (expected ±6π rad), measured after the
+// robot was set back on the start pose, averaged ±18.7467 rad in both directions
+// (one CCW sample of -28.72 rad dropped). Scale = 6π / 18.7467.
+constexpr double IMU_HEADING_SCALE = 1.00549;
 
 constexpr double FIELD_HALF_IN = 72.0;  // in; 12 ft field, origin at centre
 constexpr int NUM_PARTICLES = 350;
@@ -60,10 +65,10 @@ constexpr double DIST_MAX_IN = 2000.0 / 25.4;
 // Lateral errors are in inches, angular errors in radians. Speeds are pct of 12 V.
 
 inline ControllerSettings LATERAL_CONTROLLER = {
-    .kP = 0.167,
+    .kP = 0.235,
     .kI = 0.001,
-    .kD = 0.03,
-    .windupRange = 3.0,  // in
+    .kD = 0.01,
+    .windupRange = 1.0,  // in
     .smallError = 0.75,  // in
     .smallErrorTimeoutMs = 150,
     .largeError = 3.0,  // in
@@ -72,7 +77,7 @@ inline ControllerSettings LATERAL_CONTROLLER = {
 };
 
 inline ControllerSettings ANGULAR_CONTROLLER = {
-    .kP = 1.8,
+    .kP = 2.35,
     .kI = 0.02,
     .kD = 0.1,
     .windupRange = 0.087,  // rad ~ 5 deg
