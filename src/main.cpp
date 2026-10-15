@@ -1,9 +1,3 @@
-/**
- * CE_OVERRIDE PROS 4 project.
- *
- * Command-based: one drivetrain subsystem, a 10 ms CommandScheduler task, and
- * no extra tasks or mutexes. Driving in opcontrol is the drivetrain default command.
- */
 #include "main.h"
 
 #include "autonomous/autonCommands.h"
@@ -27,7 +21,7 @@ void initialize() {
     pros::lcd::initialize();
 
     subsystemInit();
-    DriverMacros::bind(primary);  // before the scheduler task polls the event loop
+    DriverMacros::bind(primary);  
 
     pros::Task scheduler(schedulerLoop, "Command Scheduler");
 

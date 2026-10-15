@@ -6,11 +6,14 @@
 
 class DriverMacros {
  public:
-  static Command* intakeToClaw() {  // close claw, raise lift for 1 second on 100% power, finally wrist up
-    return new Sequence({
+  static Command* intakeToClaw() {  
+    return new ParallelCommandGroup({
+      intakeFor(100, 500),
+      new Sequence({
         clawSubsystem->clawClose(),
         liftFor(100, 1000),
-        clawSubsystem->wristUp(),
+        clawSubsystem->wristUp(),  
+      }),
     });
   };
 
@@ -36,6 +39,14 @@ class DriverMacros {
         new FunctionalCommand([] {}, [pct] { liftSubsystem->setPct(pct); },
                               [](bool) { liftSubsystem->stop(); },
                               [] { return false; }, {liftSubsystem}),
+        durationMs);
+  }
+
+  static Command* intakeFor(double pct, double durationMs) {
+    return timed(
+        new FunctionalCommand([] {}, [pct] { intakeSubsystem->setPct(pct); },
+                              [](bool) { intakeSubsystem->stop(); },
+                              [] { return false; }, {intakeSubsystem}),
         durationMs);
   }
 };
