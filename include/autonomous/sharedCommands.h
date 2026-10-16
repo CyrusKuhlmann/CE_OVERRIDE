@@ -4,7 +4,6 @@
 #include "command/includes.h"
 #include "commands/driveDistance.h"
 #include "commands/driveToPoint.h"
-#include "commands/print.h"
 #include "commands/rotate.h"
 #include "config.h"
 #include "subsystems/subsystems.h"
@@ -47,14 +46,5 @@ public:
 
     static Command* stop() {
         return new InstantCommand([] { drivetrainSubsystem->stop(); }, {drivetrainSubsystem});
-    }
-
-    template <typename... Args>
-    static Command* print(int line, std::string format, Args&&... args) {
-        return new Print(line, std::move(format), std::forward<Args>(args)...);
-    }
-
-    static Command* print(int line, std::function<std::string()> message) {
-        return new Print(line, std::move(message));
     }
 };

@@ -4,6 +4,7 @@
 #include "command/commandScheduler.h"
 #include "command/runCommand.h"
 #include "config.h"
+#include "subsystems/brainDisplay.h"
 #include "subsystems/claw.h"
 #include "subsystems/drivetrain.h"
 #include "subsystems/intake.h"
@@ -30,8 +31,10 @@ inline void subsystemInit() {
     intakeSubsystem = new IntakeSubsystem(CONFIG::INTAKE_PORT);
     liftSubsystem = new LiftSubsystem(CONFIG::LIFT_PORT);
     clawSubsystem = new ClawSubsystem(CONFIG::WRIST_PORT, CONFIG::CLAW_PORT);
+    auto* brainDisplay = new BrainDisplay();
 
     CommandScheduler::registerSubsystem(localizationSubsystem, new RunCommand([] {}, {localizationSubsystem}));
+    CommandScheduler::registerSubsystem(brainDisplay, new RunCommand([] {}, {brainDisplay}));
     CommandScheduler::registerSubsystem(drivetrainSubsystem, drivetrainSubsystem->drive(primary));
     CommandScheduler::registerSubsystem(intakeSubsystem, intakeSubsystem->intake(primary));
     CommandScheduler::registerSubsystem(liftSubsystem, liftSubsystem->lift(primary));
