@@ -18,10 +18,6 @@ public:
         localizationSubsystem->setPose(pose.xIn, pose.yIn, CONFIG::degToRad(pose.headingDeg));
     }
 
-    // Motions mirror LemLib's calls: target, then timeout(s) (ms; <= 0 disables), then speed options.
-    // Speeds are pct of 12 V. A nonzero minSpeed enables motion chaining: the motion hands off at speed
-    // once within earlyExitRange of the target (in for drives, deg for turns).
-
     static Command* drive(double distanceIn, double headingDeg, int timeoutMs = 0,
                           double maxSpeed = CONFIG::DRIVE_MAX_SPEED, double minSpeed = 0.0,
                           double earlyExitRangeIn = 0.0) {
@@ -46,5 +42,56 @@ public:
 
     static Command* stop() {
         return new InstantCommand([] { drivetrainSubsystem->stop(); }, {drivetrainSubsystem});
+    }
+
+    static Command* setGlobalPosition(double xIn, double yIn, double headingDeg) {
+        return localizationSubsystem->setPoseCommand(xIn, yIn, CONFIG::degToRad(headingDeg));
+    }
+
+    static Command* intakeToClaw() {
+        return new Sequence({
+            intakeFor(100, 200),
+            clawSubsystem->clawClose(),
+            liftFor(100, 900),
+            clawSubsystem->wristUp(),
+        });
+    }
+
+    static Command* intakeToClawPinOnly() {
+        return new Sequence({
+            intakeFor(100, 200),
+            intakeFor(-100, 200),
+            clawSubsystem->clawClose(),
+            liftFor(100, 900),
+            clawSubsystem->wristUp(),
+        });
+    }
+
+    static Command* toggleClaw() { return clawSubsystem->clawToggle(); }
+
+    // pct is percent of 12 V. Positive raises, negative lowers.
+    static Command* liftFor(double pct, double durationMs) {
+        return timed(new FunctionalCommand([] {}, [pct] { liftSubsystem->setPct(pct / 100.0); },
+                                           [](bool) { liftSubsystem->stop(); }, [] { return false; }, {liftSubsystem}),
+                     durationMs);
+    }
+
+    static Command* clawToIntake() {
+        return new Sequence({
+            clawSubsystem->clawOpen(),
+            clawSubsystem->wristDown(),
+        });
+    }
+
+private:
+    static Command* timed(Command* command, double durationMs) {
+        return command->withTimeout(static_cast<float>(durationMs) * millisecond);
+    }
+
+    static Command* intakeFor(double pct, double durationMs) {
+        return timed(new FunctionalCommand([] {}, [pct] { intakeSubsystem->setPct(pct); },
+                                           [](bool) { intakeSubsystem->stop(); }, [] { return false; },
+                                           {intakeSubsystem}),
+                     durationMs);
     }
 };

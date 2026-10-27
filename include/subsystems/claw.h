@@ -18,6 +18,7 @@ public:
     InstantCommand* wristDown();
     InstantCommand* clawOpen();
     InstantCommand* clawClose();
+    InstantCommand* clawToggle();
 
     RunCommand* toggle(pros::Controller& controller);
 

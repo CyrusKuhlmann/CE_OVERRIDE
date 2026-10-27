@@ -22,6 +22,10 @@ InstantCommand* ClawSubsystem::clawClose() {
     return new InstantCommand([this] { claw_.extend(); }, {this});
 }
 
+InstantCommand* ClawSubsystem::clawToggle() {
+    return new InstantCommand([this] { claw_.toggle(); }, {this});
+}
+
 RunCommand* ClawSubsystem::toggle(pros::Controller& controller) {
     auto* pad = &controller;
     return new RunCommand(

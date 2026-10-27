@@ -6,45 +6,15 @@
 
 class DriverMacros {
  public:
-  static Command* intakeToClaw() {  
-      return new Sequence({
-        intakeFor(100, 200),
-        clawSubsystem->clawClose(),
-        liftFor(100, 900),
-        clawSubsystem->wristUp(),  
-      });
-  };
+  static Command* intakeToClaw() { return SharedCommands::intakeToClaw(); }
 
-  static Command* clawToIntake() {  // open claw, wrist down
-    return new Sequence({
-        clawSubsystem->clawOpen(),
-        clawSubsystem->wristDown(),
-    });
-  };
+  static Command* intakeToClawPinOnly() { return SharedCommands::intakeToClawPinOnly(); }
+
+  static Command* clawToIntake() { return SharedCommands::clawToIntake(); }
 
   static void bind(CommandController& pad) {
     pad.getTrigger(pros::E_CONTROLLER_DIGITAL_UP)->onTrue(intakeToClaw());
     pad.getTrigger(pros::E_CONTROLLER_DIGITAL_DOWN)->onTrue(clawToIntake());
-  }
-
- private:
-  static Command* timed(Command* command, double durationMs) {
-    return command->withTimeout(static_cast<float>(durationMs) * millisecond);
-  }
-
-  static Command* liftFor(double pct, double durationMs) {
-    return timed(
-        new FunctionalCommand([] {}, [pct] { liftSubsystem->setPct(pct); },
-                              [](bool) { liftSubsystem->stop(); },
-                              [] { return false; }, {liftSubsystem}),
-        durationMs);
-  }
-
-  static Command* intakeFor(double pct, double durationMs) {
-    return timed(
-        new FunctionalCommand([] {}, [pct] { intakeSubsystem->setPct(pct); },
-                              [](bool) { intakeSubsystem->stop(); },
-                              [] { return false; }, {intakeSubsystem}),
-        durationMs);
+    pad.getTrigger(pros::E_CONTROLLER_DIGITAL_LEFT)->onTrue(intakeToClawPinOnly());
   }
 };

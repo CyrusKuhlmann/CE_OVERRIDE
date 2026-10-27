@@ -2,9 +2,9 @@
 
 // Active autonomous selection.
 
-enum Auton { NONE, TEST };
+enum Auton { NONE, CLOSE, RIGHT, SKILLS, TEST };
 
-#define AUTON TEST
+#define AUTON CLOSE
 
 namespace auton {
 

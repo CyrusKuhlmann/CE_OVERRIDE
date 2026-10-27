@@ -3,11 +3,14 @@
 #include "command/runCommand.h"
 
 #include "pros/misc.hpp"
-#include "pros/motors.hpp"
+#include "pros/motor_group.hpp"
+
+#include <cstdint>
+#include <initializer_list>
 
 class LiftSubsystem : public Subsystem {
 public:
-    LiftSubsystem(int port);
+    LiftSubsystem(std::initializer_list<int8_t> ports);
 
     void periodic() override {}
 
@@ -18,5 +21,5 @@ public:
     void stop();
 
 private:
-    pros::Motor liftMotor_;
+    pros::MotorGroup liftMotors_;
 };

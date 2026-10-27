@@ -8,6 +8,12 @@ class AutonomousCommands {
 public:
     static Command* getAuton() {
         switch (AUTON) {
+        case CLOSE:
+            return Routines::close();
+        case RIGHT:
+            return Routines::right();
+        case SKILLS:
+            return Routines::skills();
         case TEST:
             return Routines::test();
         case NONE:
@@ -18,6 +24,12 @@ public:
 
     static auton::StartPose getStartPose() {
         switch (AUTON) {
+        case CLOSE:
+            return Routines::kCloseStart;
+        case RIGHT:
+            return Routines::kRightStart;
+        case SKILLS:
+            return Routines::kSkillsStart;
         case TEST:
             return Routines::kTestStart;
         case NONE:

@@ -25,6 +25,7 @@ public:
 	 */
 	void initialize() override {
 		index = 0;
+		if (commands.empty()) return;
 
 		commands[0]->initialize();
 	}
@@ -33,6 +34,8 @@ public:
 	 * @brief Execute the current command, and step through when it's done
 	 */
 	void execute() override {
+		if (index >= commands.size()) return;
+
 		commands[index]->execute();
 
 		if (commands[index]->isFinished()) {
