@@ -37,54 +37,26 @@ public:
             // set global position to current x current theta, and -60.5 y
             SharedCommands::setGlobalPosition(localizationSubsystem->getX(), -60.5, 180.0),
 
+            // driveTo (0, -47.425) moving backwards
+            SharedCommands::driveTo(0, -47.425, 500, 1500, false, 30, 0, 0),
+
             // intake to claw
             SharedCommands::intakeToClaw(),
 
             SharedCommands::wait(300),
 
-            // driveTo (0, -47.425) moving backwards
-            SharedCommands::driveTo(0, -47.425, 500, 1500, false, 30, 0, 0),
-
             // driveTo (12.425, -47.425) moving backwards
-            SharedCommands::driveTo(12.425, -47.425, 1200, 1750, false, 25, 0, 0, 300),
+            SharedCommands::driveTo(12.425, -47.525, 1200, 1750, false, 25, 0, 0, 300),
 
             // turnTo 90 degrees
             SharedCommands::turnTo(-90, 500, 10, 0, 0),
 
+            SharedCommands::liftFor(-70, 850),
+
+            SharedCommands::wait(300),
+
             // relese claw
             SharedCommands::toggleClaw(),
-
-
-
-
-
-            // SharedCommands::drive(6.5, 180.0, 300, 100, 0),
-            // SharedCommands::drive(-3.5, 180.0, 1000, 100, 0),
-
-            // SharedCommands::wait(1000),
-
-            // SharedCommands::drive(6.5, 180.0, 1000, 75, 0),
-            // SharedCommands::drive(-3.5, 180.0, 1000, 100, 0),
-
-            // SharedCommands::wait(300),
-
-            // SharedCommands::drive(6.5, 180.0, 1000, 80, 0),
-
-            // SharedCommands::drive(-14, 180.0, 1500, 60, 0, 0),
-
-            // SharedCommands::intakeToClaw(),
-
-            // SharedCommands::turnTo(270),
-
-            // SharedCommands::drive(-15.25, 270.0, 2000, 60, 0),
-
-            // SharedCommands::drive(1.5, 270.0, 2000, 40, 0),
-
-            // SharedCommands::liftFor(-70, 760),
-
-            // SharedCommands::wait(200),
-
-            // SharedCommands::toggleClaw(),
 
             // first scored
         });
@@ -96,32 +68,45 @@ public:
 
             SharedCommands::wait(100),
 
-            SharedCommands::drive(6.5, 90.0, 300, 100, 0),
-            SharedCommands::drive(-3.5, 90.0, 1000, 100, 0),
-
-            SharedCommands::wait(1000),
-
-            SharedCommands::drive(6.5, 90.0, 1000, 75, 0),
-            SharedCommands::drive(-3.5, 90.0, 1000, 100, 0),
+            SharedCommands::drive(-4.5, 90.0, 300, 100, 0),
+            SharedCommands::drive(-3.5, 90.0, 300, 100, 0),
+            SharedCommands::drive(3.5, 90.0, 300, 100, 0),
+            SharedCommands::wait(300),
+            SharedCommands::drive(-3.5, 90.0, 300, 100, 0),
+            SharedCommands::drive(3.5, 90.0, 300, 100, 0),
 
             SharedCommands::wait(300),
 
-            SharedCommands::drive(6.5, 90.0, 1000, 80, 0),
+            SharedCommands::drive(5.5, 90.0, 1200, 10, 0),
 
-            SharedCommands::drive(-14, 90.0, 1500, 60, 0, 0),
+            SharedCommands::drive(-3.5, 90.0, 1500, 10, 0, 0),
 
+            SharedCommands::wait(300),
+
+            SharedCommands::drive(5.5, 90.0, 1200, 10, 0),
+
+            // set global position to current x current theta, and -60.5 y
+            SharedCommands::setGlobalPosition(60.5, localizationSubsystem->getY(), 90.0),
+
+            // driveTo (47.425, 0) moving backwards
+            SharedCommands::driveTo(47.425, 0, 500, 1500, false, 30, 0, 0),
+
+            // intake to claw
             SharedCommands::intakeToClaw(),
 
-            SharedCommands::turnTo(0),
+            SharedCommands::wait(300),
 
-            SharedCommands::drive(-15.25, 0.0, 2000, 60, 0),
+            // driveTo (48, -12.425) moving backwards
+            SharedCommands::driveTo(48, -12.425, 1200, 1750, false, 25, 0, 0, 300),
 
-            SharedCommands::drive(1.5, 0.0, 2000, 40, 0),
+            // turnTo 90 degrees
+            SharedCommands::turnTo(0, 500, 10, 0, 0),
 
-            SharedCommands::liftFor(-70, 760),
+            SharedCommands::liftFor(-70, 850),
 
-            SharedCommands::wait(200),
+            SharedCommands::wait(300),
 
+            // relese claw
             SharedCommands::toggleClaw(),
 
             // first scored
