@@ -4,7 +4,7 @@
 
 enum Auton { NONE, CLOSE, RIGHT, SKILLS, TEST };
 
-#define AUTON RIGHT
+#define AUTON SKILLS
 
 namespace auton {
 

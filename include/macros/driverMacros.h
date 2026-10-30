@@ -16,5 +16,7 @@ class DriverMacros {
     pad.getTrigger(pros::E_CONTROLLER_DIGITAL_UP)->onTrue(intakeToClaw());
     pad.getTrigger(pros::E_CONTROLLER_DIGITAL_DOWN)->onTrue(clawToIntake());
     pad.getTrigger(pros::E_CONTROLLER_DIGITAL_LEFT)->onTrue(intakeToClawPinOnly());
+    pad.getTrigger(pros::E_CONTROLLER_DIGITAL_X)->onTrue(
+        new InstantCommand([] { drivetrainSubsystem->toggleSlowMode(); }, {}));
   }
 };

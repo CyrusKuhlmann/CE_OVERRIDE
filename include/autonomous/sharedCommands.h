@@ -18,6 +18,14 @@ public:
         localizationSubsystem->setPose(pose.xIn, pose.yIn, CONFIG::degToRad(pose.headingDeg));
     }
 
+    // pct is [-1, 1] of 12 V, applied equally to both sides.
+    static Command* driveRaw(double pct, double durationMs) {
+        return timed(new FunctionalCommand([] {}, [pct] { drivetrainSubsystem->setPct(pct, pct); },
+                                           [](bool) { drivetrainSubsystem->stop(); }, [] { return false; },
+                                           {drivetrainSubsystem}),
+                     durationMs);
+    }
+
     static Command* drive(double distanceIn, double headingDeg, int timeoutMs = 0,
                           double maxSpeed = CONFIG::DRIVE_MAX_SPEED, double minSpeed = 0.0,
                           double earlyExitRangeIn = 0.0) {

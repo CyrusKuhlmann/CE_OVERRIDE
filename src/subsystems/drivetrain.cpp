@@ -31,6 +31,13 @@ void DrivetrainSubsystem::setVoltages(int leftMv, int rightMv) {
 
 void DrivetrainSubsystem::stop() { setPct(0.0, 0.0); }
 
+void DrivetrainSubsystem::toggleSlowMode() { slowMode_ = !slowMode_; }
+
+void DrivetrainSubsystem::setDriverPct(double left, double right) {
+    const double scale = slowMode_ ? 0.5 : 1.0;
+    setPct(left * scale, right * scale);
+}
+
 inline double DrivetrainSubsystem::applyDriveNonlinearity(double x) {
     return CONFIG::DRIVE_NONLINEARITY * x * x * x + (1.0 - CONFIG::DRIVE_NONLINEARITY) * x;
 }
@@ -52,7 +59,7 @@ RunCommand* DrivetrainSubsystem::tankDrive(pros::Controller& controller) {
             const double left = mappedDriveAxis(*pad, pros::E_CONTROLLER_ANALOG_LEFT_Y);
             const double right = mappedDriveAxis(*pad, pros::E_CONTROLLER_ANALOG_RIGHT_Y);
 
-            this->setPct(left, right);
+            this->setDriverPct(left, right);
         },
         {this});
 }
@@ -76,7 +83,7 @@ RunCommand* DrivetrainSubsystem::doubleArcadeDrive(pros::Controller& controller)
             left /= max;
             right /= max;
 
-            this->setPct(left, right);
+            this->setDriverPct(left, right);
         },
         {this});
 }
@@ -100,7 +107,7 @@ RunCommand* DrivetrainSubsystem::singleArcadeDrive(pros::Controller& controller)
             left /= max;
             right /= max;
 
-            this->setPct(left, right);
+            this->setDriverPct(left, right);
         },
         {this});
 }

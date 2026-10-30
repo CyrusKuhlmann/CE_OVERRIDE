@@ -17,6 +17,7 @@ public:
     void setPct(double left, double right);  // [-1, 1]
     void setVoltages(int leftMv, int rightMv);  // mV
     void stop();
+    void toggleSlowMode();
 
     RunCommand* tankDrive(pros::Controller& controller);
     RunCommand* doubleArcadeDrive(pros::Controller& controller);
@@ -26,7 +27,9 @@ public:
 private:
     static double mappedDriveAxis(pros::Controller& controller, pros::controller_analog_e_t axis);
     static double applyDriveNonlinearity(double x);
+    void setDriverPct(double left, double right);
 
     pros::MotorGroup leftMotors_;
     pros::MotorGroup rightMotors_;
+    bool slowMode_ = false;
 };

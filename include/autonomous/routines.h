@@ -38,7 +38,7 @@ public:
             SharedCommands::setGlobalPosition(localizationSubsystem->getX(), -60.5, 180.0),
 
             // driveTo (0, -47.425) moving backwards
-            SharedCommands::driveTo(0, -47.425, 500, 1500, false, 30, 0, 0),
+            SharedCommands::driveTo(0, -47.275, 750, 2000, false, 10, 0, 0),
 
             // intake to claw
             SharedCommands::intakeToClaw(),
@@ -46,7 +46,7 @@ public:
             SharedCommands::wait(300),
 
             // driveTo (12.425, -47.425) moving backwards
-            SharedCommands::driveTo(12.425, -47.525, 1200, 1750, false, 25, 0, 0, 300),
+            SharedCommands::driveTo(12.425, -47.425, 2000, 3000, false, 7, 0, 0, 300),
 
             // turnTo 90 degrees
             SharedCommands::turnTo(-90, 500, 10, 0, 0),
@@ -119,58 +119,85 @@ public:
 
             SharedCommands::wait(100),
 
-            SharedCommands::drive(6.5, 180.0, 300, 100, 0),
-            SharedCommands::drive(-3.5, 180.0, 1000, 100, 0),
-
-            SharedCommands::wait(1000),
-
-            SharedCommands::drive(6.5, 180.0, 1000, 75, 0),
-            SharedCommands::drive(-3.5, 180.0, 1000, 100, 0),
+            SharedCommands::drive(-4.5, 180.0, 300, 1, 0),
+            SharedCommands::drive(-3.5, 180.0, 300, 1, 0),
+            SharedCommands::drive(3.5, 180.0, 300, 1, 0),
+            SharedCommands::wait(300),
+            SharedCommands::drive(-3.5, 180.0, 300, 1, 0),
+            SharedCommands::drive(3.5, 180.0, 300, 1, 0),
 
             SharedCommands::wait(300),
 
-            SharedCommands::drive(6.5, 180.0, 1000, 80, 0),
+            SharedCommands::drive(5.5, 180.0, 1200, 1, 0),
 
-            SharedCommands::drive(-14, 180.0, 1500, 60, 0, 0),
+            SharedCommands::drive(-3.5, 180.0, 1500, 1, 0, 0),
 
+            SharedCommands::wait(300),
+
+            SharedCommands::drive(5.5, 180.0, 1200, 1, 0),
+
+            // set global position to current x current theta, and -60.5 y
+            SharedCommands::setGlobalPosition(localizationSubsystem->getX(), -60.5, 180.0),
+
+            // driveTo (0, -47.425) moving backwards
+            SharedCommands::driveTo(0, -47.275, 750, 2000, false, 1, 0, 0),
+
+            // intake to claw
             SharedCommands::intakeToClaw(),
 
-            SharedCommands::turnTo(270),
+            SharedCommands::wait(300),
 
-            SharedCommands::drive(-15.25, 270.0, 2000, 60, 0),
+            // driveTo (12.425, -47.425) moving backwards
+            SharedCommands::driveTo(12.425, -47.425, 2000, 3000, false, 1, 0, 0, 300),
 
-            SharedCommands::drive(1.5, 270.0, 2000, 40, 0),
-
-            SharedCommands::liftFor(-70, 760),
-
-            SharedCommands::wait(200),
-
-            SharedCommands::toggleClaw(),
-
-            // first scored
-            SharedCommands::setGlobalPosition(48, -14, localizationSubsystem->getAngle()),
-
-            SharedCommands::wait(200),
-
-            SharedCommands::drive(11, 270.0, 1000, 50, 0),
-
-            SharedCommands::turnTo(-135),
-
-            SharedCommands::drive(-20, 225, 2500, 1, 0),
-
-            SharedCommands::toggleClaw(),
-
-            SharedCommands::liftFor(70, 850),
-
-            SharedCommands::drive(-10, 225, 750, 30, 0),
-
-            SharedCommands::turnTo(0),
-
-            SharedCommands::drive(-15, 0, 1500, 50, 0),
+            // turnTo 90 degrees
+            SharedCommands::turnTo(-90, 500, 1, 0, 0),
 
             SharedCommands::liftFor(-70, 850),
 
+            SharedCommands::wait(300),
+
+            // relese claw
             SharedCommands::toggleClaw(),
+
+            // first scored
+
+            SharedCommands::wait(600),
+
+            SharedCommands::driveTo(0, -48, 1500, 2200, true, 0.50, 0, 0, 300),
+
+            SharedCommands::driveTo(12.6, -34.6, 1500, 2800, false, 0.50, 0, 0, 300),
+
+            SharedCommands::turnTo(225, 1000, 0.50, 0, 0),
+
+            new ParallelCommandGroup({
+                SharedCommands::drive(-5, 225.0, 1500, 0.3, 0, 0),
+
+                new Sequence({
+                    SharedCommands::wait(300),
+
+                    // claw now closed
+                    SharedCommands::toggleClaw(),
+                    SharedCommands::wait(150),
+                    SharedCommands::liftFor(100, 1500),
+                }),
+            }),
+
+            SharedCommands::driveTo(22, -43.5, 1500, 2200, false, 0.50, 0, 0, 300),
+
+            SharedCommands::driveRaw(0.2, 200),
+
+            SharedCommands::liftFor(-70, 1200),
+
+            // release claw
+            SharedCommands::toggleClaw(),
+
+            SharedCommands::wait(300),
+
+            SharedCommands::driveRaw(0.5, 500),
+
+            SharedCommands::driveTo(0, 0, 1500, 2200, true, 0.50, 0, 0, 300),
+
         });
     }
 
